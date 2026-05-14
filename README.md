@@ -1,45 +1,45 @@
-# Chrome 插件集
+# YKPlugNova
 
-本仓库包含以下 Chrome 浏览器扩展（Manifest V3）：
+A collection of Chrome extension tools (Manifest V3).
 
 ---
 
-## 1. Twitter/X 双语回复助手
-![AI自动生成回复](/assets/autoreply.png)
+## 1. Twitter/X Bilingual Reply Assistant
+![AI auto-reply](/assets/autoreply.png)
 `twitter-reply-ai-assistant/`
 
-提取 Twitter/X 帖子内容，调用 AI 一键生成中英文双语回复。
+Extract tweets and generate bilingual (Chinese/English) replies with one click via AI.
 
-- 支持 OpenAI、Claude、自定义 API
-- API Key 仅存储在本地，隐私安全
-- 无需构建步骤，直接加载为未打包扩展
+- Supports OpenAI, Claude, custom API endpoints
+- API keys stored locally only, privacy-first
+- No build step required — load as unpacked extension directly
 
-[查看详情 →](twitter-reply-ai-assistant/README.md)
+[Details →](twitter-reply-ai-assistant/README.md)
 
 ---
 
-## 2. DownloadApp 视频下载插件
-![一键下载视频](/assets/autodownload.png)
+## 2. DownloadApp — Video Downloader
+![One-click video download](/assets/autodownload.png)
 `x-youtube-video-download/`
 
-探测页面中的视频资源（HLS / MP4 / DASH），通过本地 Python 服务完成下载、解密和混流。
+Detect video resources (HLS / MP4 / DASH) on a page and download, decrypt, and mux them through a local Python service.
 
-- 支持 M3U8 多线程分段下载 + AES-128 解密
-- 支持 YouTube / Twitter / Bilibili 直接下载（yt-dlp）
-- 实时进度与日志，支持取消
-- 需安装 Native Messaging Host
+- M3U8 multi-threaded segmented download + AES-128 decryption
+- YouTube / Twitter / Bilibili direct download (yt-dlp)
+- Real-time progress and logs, cancellation supported
+- Requires Native Messaging Host installation
 
-[查看详情 →](x-youtube-video-download/README.md)
+[Details →](x-youtube-video-download/README.md)
 
 ---
 
-## 通用安装步骤
+## General Installation
 
-所有插件均通过 Chrome 开发者模式加载：
+All extensions are loaded via Chrome developer mode:
 
-1. 打开 `chrome://extensions/`
-2. 开启右上角「开发者模式」
-3. 点击「加载已解压的扩展程序」
-4. 选择对应插件目录
+1. Open `chrome://extensions/`
+2. Enable "Developer mode" (top right)
+3. Click "Load unpacked"
+4. Select the extension's directory
 
-各插件可能有额外依赖（如 API Key 或 Native Host），请参考各自的 README。
+Each extension may have additional dependencies (e.g. API key or Native Host). See their respective README for details.
