@@ -24,6 +24,7 @@
           <select id="ai-provider">
             <option value="openai">OpenAI</option>
             <option value="claude">Claude (Anthropic)</option>
+            <option value="openrouter">OpenRouter</option>
             <option value="custom">自定义 API</option>
           </select>
         </div>
@@ -39,7 +40,11 @@
           <label>模型</label>
           <input type="text" id="model-name" placeholder="例如: gpt-4o-mini">
         </div>
-        <button id="save-settings" class="btn btn-secondary">保存设置</button>
+        <div style="display:flex;gap:8px">
+          <button id="test-btn" class="btn btn-secondary" style="flex:1">🔌 测试连接</button>
+          <button id="save-settings" class="btn btn-secondary" style="flex:1">保存设置</button>
+        </div>
+        <div id="test-result" class="test-result hidden"></div>
       </div>
     </div>
 

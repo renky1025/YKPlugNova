@@ -17,6 +17,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const customUrlGroup = document.getElementById('custom-url-group');
   const customUrl = document.getElementById('custom-url');
   const modelName = document.getElementById('model-name');
+  const testBtn = document.getElementById('test-btn');
+  const testResult = document.getElementById('test-result');
 
   let extractedData = null;
 
@@ -31,6 +33,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const defaultModels = {
     openai: 'gpt-4o-mini',
     claude: 'claude-3-haiku-20240307',
+    openrouter: 'openai/gpt-4o-mini',
     custom: ''
   };
 
@@ -61,6 +64,42 @@ document.addEventListener('DOMContentLoaded', async () => {
       modelName: modelName.value
     });
     showToast('设置已保存');
+  });
+
+  // Test connection
+  testBtn.addEventListener('click', async () => {
+    const key = apiKey.value.trim();
+    if (!key) {
+      testResult.className = 'test-result error';
+      testResult.textContent = '请先输入 API Key';
+      testResult.classList.remove('hidden');
+      return;
+    }
+
+    const model = modelName.value.trim() || defaultModels[aiProvider.value];
+    if (!model) {
+      testResult.className = 'test-result error';
+      testResult.textContent = '请设置模型名称';
+      testResult.classList.remove('hidden');
+      return;
+    }
+
+    testBtn.disabled = true;
+    testBtn.textContent = '测试中...';
+    testResult.classList.add('hidden');
+
+    try {
+      const msg = await testApiConnection(key, aiProvider.value, model, customUrl.value.trim());
+      testResult.className = 'test-result success';
+      testResult.textContent = `✅ 连接成功 (${msg})`;
+    } catch (err) {
+      testResult.className = 'test-result error';
+      testResult.textContent = `❌ ${err.message}`;
+    } finally {
+      testResult.classList.remove('hidden');
+      testBtn.disabled = false;
+      testBtn.textContent = '🔌 测试连接';
+    }
   });
 
   // Extract post
@@ -241,6 +280,84 @@ document.addEventListener('DOMContentLoaded', async () => {
     return /[\u4e00-\u9fff]/.test(text.slice(0, 80));
   }
 
+  // Test API connection (minimal call)
+  async function testApiConnection(apiKey, provider, model, customApiUrl) {
+    const isOpenRouter = provider === 'openrouter' || customApiUrl.includes('openrouter.ai');
+    const url = provider === 'custom' ? customApiUrl
+              : provider === 'claude' ? 'https://api.anthropic.com/v1/messages'
+              : provider === 'openrouter' ? 'https://openrouter.ai/api/v1/chat/completions'
+              : 'https://api.openai.com/v1/chat/completions';
+
+    let response;
+
+    if (provider === 'claude') {
+      response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01'
+        },
+        body: JSON.stringify({
+          model,
+          max_tokens: 10,
+          messages: [{ role: 'user', content: 'Reply with one word: OK' }]
+        })
+      });
+    } else {
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      };
+
+      if (isOpenRouter) {
+        headers['HTTP-Referer'] = 'https://chrome.google.com/webstore';
+        headers['X-Title'] = 'Twitter Reply AI Assistant';
+      }
+
+      response = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          model,
+          messages: [{ role: 'user', content: 'Reply with one word: OK' }],
+          max_tokens: 10
+        })
+      });
+    }
+
+    const contentType = response.headers.get('content-type') || '';
+    const isJson = contentType.includes('application/json');
+
+    if (!response.ok) {
+      if (isJson) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error?.message || `HTTP ${response.status}`);
+      }
+      const text = await response.text().catch(() => '');
+      throw new Error(`HTTP ${response.status}: 返回了非 JSON 响应`);
+    }
+
+    if (!isJson) {
+      throw new Error(`返回了非 JSON 响应 (${contentType})`);
+    }
+
+    const result = await response.json();
+    let content = '';
+
+    if (provider === 'claude') {
+      content = result.content?.[0]?.text || '';
+    } else {
+      content = result.choices?.[0]?.message?.content || '';
+    }
+
+    if (!content) {
+      throw new Error('API 返回了空内容');
+    }
+
+    return content.trim();
+  }
+
   // Generate reply via AI API
   async function generateBilingualReply(data, apiKey, provider, model, customApiUrl) {
     const systemPrompt = [
@@ -259,8 +376,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     ].join('\n\n');
 
     let response;
+    const isOpenRouter = provider === 'openrouter' || customApiUrl.includes('openrouter.ai');
     const url = provider === 'custom' ? customApiUrl
               : provider === 'claude' ? 'https://api.anthropic.com/v1/messages'
+              : provider === 'openrouter' ? 'https://openrouter.ai/api/v1/chat/completions'
               : 'https://api.openai.com/v1/chat/completions';
 
     if (provider === 'claude') {
@@ -282,12 +401,19 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     } else {
       // openai or custom (OpenAI-compatible)
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      };
+
+      if (isOpenRouter) {
+        headers['HTTP-Referer'] = 'https://chrome.google.com/webstore';
+        headers['X-Title'] = 'Twitter Reply AI Assistant';
+      }
+
       response = await fetch(url, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
+        headers,
         body: JSON.stringify({
           model: model,
           messages: [

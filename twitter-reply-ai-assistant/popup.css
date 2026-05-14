@@ -271,6 +271,25 @@ textarea {
   transition: all 0.3s;
 }
 
+.test-result {
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.test-result.success {
+  background: rgba(78, 204, 163, 0.15);
+  color: var(--success);
+  border: 1px solid rgba(78, 204, 163, 0.3);
+}
+
+.test-result.error {
+  background: rgba(233, 69, 96, 0.15);
+  color: var(--accent);
+  border: 1px solid rgba(233, 69, 96, 0.3);
+}
+
 .hidden {
   display: none !important;
 }
