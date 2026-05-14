@@ -5,7 +5,7 @@
 ---
 
 ## 1. Twitter/X 双语回复助手
-
+![AI自动生成回复](/assets/autoreply.png)
 `twitter-reply-ai-assistant/`
 
 提取 Twitter/X 帖子内容，调用 AI 一键生成中英文双语回复。
@@ -19,7 +19,7 @@
 ---
 
 ## 2. DownloadApp 视频下载插件
-
+![一键下载视频](/assets/autodownload.png)
 `x-youtube-video-download/`
 
 探测页面中的视频资源（HLS / MP4 / DASH），通过本地 Python 服务完成下载、解密和混流。
