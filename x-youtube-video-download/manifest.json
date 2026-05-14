@@ -1,0 +1,41 @@
+{
+  "manifest_version": 3,
+  "name": "DownloadApp Video Detector",
+  "version": "1.0.0",
+  "description": "探测页面视频并调用 DownloadApp 下载",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA2QSHKI0j8lspwiFfRfSsASeHqDWmK52Y3xX2u4GYchkT2L3PczO1jfdEMij5QVwdTC9scrVjAz7zqvM5/I8JeMGw4iT8ROxe0yFrmWNR289fQ7AHO7kAu8ycKulgzInQIDatnOD2ts1YwC2JPUr1Q1zHpoCbCI8h2pJ6JMnw+AjwW0eipZWnJdHNARGzrvSbwh85agR1ObQgV0oDanSgug30Axz6AR6hr791/TUmCbcZZJBdaX24/m0+5scsfrOTEX+BI5B0JnJ8GMl8V5ZZuFACiQVD6SivX6Q2KTDvyo7R6tRp956Gk1DXU0t64wzmQXfFJN0muN9cnXNAucy3YwIDAQAB",
+  "permissions": [
+    "activeTab",
+    "tabs",
+    "webRequest",
+    "nativeMessaging",
+    "storage"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle",
+      "all_frames": true
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

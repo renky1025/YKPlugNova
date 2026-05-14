@@ -1,0 +1,39 @@
+{
+  "manifest_version": 3,
+  "name": "Twitter/X 双语回复助手",
+  "version": "1.0.0",
+  "description": "阅读 Twitter/X 帖子，一键生成中英文双语回复",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://twitter.com/*",
+    "https://x.com/*",
+    "https://r.jina.ai/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://twitter.com/*",
+        "https://x.com/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

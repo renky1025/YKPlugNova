@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>DownloadApp</h1>
+      <span id="status">就绪</span>
+    </header>
+
+    <div id="detected-section">
+      <div class="section-title">页面探测</div>
+      <div id="detected-hint">点击探测按钮扫描当前页面</div>
+      <button id="probe-btn" class="btn-primary">探测视频</button>
+      <button id="direct-download-btn" class="btn-primary hidden">直接下载</button>
+    </div>
+
+    <div id="candidates-section" class="hidden">
+      <div class="section-title">候选列表 <span id="candidate-count"></span></div>
+      <div id="candidate-list"></div>
+      <div id="preview-section" class="hidden">
+        <div class="preview-header">
+          <span id="preview-title">预览</span>
+          <button id="preview-close-btn" class="btn-small">关闭</button>
+        </div>
+        <video id="preview-video" controls playsinline preload="none"></video>
+      </div>
+      <div id="candidate-actions">
+        <button id="download-btn" class="btn-primary">下载选中</button>
+        <button id="cancel-btn" class="btn-secondary hidden">取消</button>
+      </div>
+    </div>
+
+    <div id="progress-section" class="hidden">
+      <div class="section-title">下载进度</div>
+      <div id="progress-message">准备下载...</div>
+      <div class="progress-bar-container">
+        <div id="progress-bar" style="width: 0%"></div>
+      </div>
+    </div>
+
+    <div id="logs-section">
+      <div class="section-title">日志</div>
+      <div id="logs"></div>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

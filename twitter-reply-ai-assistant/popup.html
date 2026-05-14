@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Twitter/X 双语回复助手</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🐦 双语回复助手</h1>
+      <p class="subtitle">阅读帖子 · 生成回复 · 一键复制</p>
+    </header>
+
+    <div id="settings-section" class="section">
+      <div class="section-header">
+        <span>⚙️ API 设置</span>
+        <button id="toggle-settings" class="icon-btn">▼</button>
+      </div>
+      <div id="settings-content" class="section-content">
+        <div class="form-group">
+          <label>AI 提供商</label>
+          <select id="ai-provider">
+            <option value="openai">OpenAI</option>
+            <option value="claude">Claude (Anthropic)</option>
+            <option value="custom">自定义 API</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>API Key</label>
+          <input type="password" id="api-key" placeholder="输入你的 API Key">
+        </div>
+        <div class="form-group" id="custom-url-group" style="display:none">
+          <label>自定义 API URL</label>
+          <input type="text" id="custom-url" placeholder="https://api.example.com/v1/chat/completions">
+        </div>
+        <div class="form-group">
+          <label>模型</label>
+          <input type="text" id="model-name" placeholder="例如: gpt-4o-mini">
+        </div>
+        <button id="save-settings" class="btn btn-secondary">保存设置</button>
+      </div>
+    </div>
+
+    <div id="content-section" class="section">
+      <div class="section-header">
+        <span>📝 帖子内容 (Markdown)</span>
+      </div>
+      <div class="section-content">
+        <textarea id="post-markdown" readonly placeholder="点击“提取帖子”获取内容..."></textarea>
+        <button id="extract-btn" class="btn btn-primary">📥 提取当前帖子</button>
+      </div>
+    </div>
+
+    <div id="reply-section" class="section">
+      <div class="section-header">
+        <span>💬 生成回复</span>
+      </div>
+      <div class="section-content">
+        <button id="generate-btn" class="btn btn-primary" disabled>✨ 生成双语回复</button>
+        <div id="reply-loading" class="loading hidden">
+          <span class="spinner"></span>
+          <span>正在生成回复...</span>
+        </div>
+        <div id="reply-result" class="hidden">
+          <div class="reply-actions">
+            <button id="copy-bilingual" class="btn btn-secondary btn-inline">复制双语</button>
+          </div>
+          <div class="reply-stack">
+            <div class="reply-card">
+              <div class="reply-card-header">
+                <div class="reply-label">中文回复</div>
+                <button class="copy-btn" data-target="reply-zh">复制</button>
+              </div>
+              <textarea id="reply-zh" readonly></textarea>
+            </div>
+            <div class="reply-card">
+              <div class="reply-card-header">
+                <div class="reply-label">English Reply</div>
+                <button class="copy-btn" data-target="reply-en">Copy</button>
+              </div>
+              <textarea id="reply-en" readonly></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="toast" class="toast hidden"></div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
