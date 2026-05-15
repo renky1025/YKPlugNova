@@ -357,42 +357,14 @@
     return normalizeWhitespace(md);
   }
 
-  async function fetchJinaMarkdown(url) {
-    try {
-      const resp = await fetch(`https://r.jina.ai/${url}`, {
-        signal: AbortSignal.timeout(20000)
-      });
-      if (!resp.ok) return null;
-      const text = await resp.text();
-      // Strip r.jina.ai metadata header lines
-      const headerPrefixes = ['Title:', 'URL Source:', 'Published Time:', 'Markdown Content:'];
-      const lines = text.split('\n');
-      let bodyStart = 0;
-      for (let i = 0; i < lines.length; i++) {
-        const trimmed = lines[i].trim();
-        if (headerPrefixes.some(p => trimmed.startsWith(p))) {
-          bodyStart = i + 1;
-        }
-      }
-      return lines.slice(bodyStart).join('\n').trim() || null;
-    } catch (e) {
-      console.warn('[Twitter Reply Assistant] r.jina.ai fetch failed:', e);
-      return null;
-    }
-  }
-
   // Listen for messages from popup
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === 'extractPost') {
       const data = extractPostData();
-      fetchJinaMarkdown(data.postUrl).then(jinaMd => {
-        sendResponse({ data, markdown: jinaMd || generateMarkdown(data) });
-      }).catch(() => {
-        sendResponse({ data, markdown: generateMarkdown(data) });
-      });
-      return true;
+      sendResponse({ data, markdown: generateMarkdown(data) });
+      return false; // synchronous response
     }
-    return true;
+    return false;
   });
 
 })();

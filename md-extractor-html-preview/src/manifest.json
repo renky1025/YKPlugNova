@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "MD Extractor & HTML Preview",
+  "version": "1.0.0",
+  "description": "Extract core web page content to Markdown, preview with themes, and edit easily.",
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"]
+    }
+  ]
+}

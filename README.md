@@ -1,6 +1,6 @@
 # YKPlugNova
 
-A collection of Chrome extension tools (Manifest V3).
+YKPlugNova is a Chrome extension toolkit focused on enhancing productivity in content creation, social interaction, and media processing.
 
 ---
 
@@ -30,6 +30,25 @@ Detect video resources (HLS / MP4 / DASH) on a page and download, decrypt, and m
 - Requires Native Messaging Host installation
 
 [Details →](x-youtube-video-download/README.md)
+
+---
+
+## 3. Web Page Markdown Extractor
+![Markdown Extractor](/assets/htmlpreview.png)
+`md-extractor-html-preview/`
+
+Extract main content from web pages and convert it into clean Markdown with a real-time, side-by-side rich text preview.
+
+- Robust content extraction using Readability and Turndown
+- Dual-pane interface (Editor and Preview) with real-time Markdown rendering
+- Theme-specific styling for the Markdown preview area
+- One-click copy for both raw Markdown and rendered Rich Text (HTML)
+
+**Build Instructions:**
+1. Navigate to the directory: `cd md-extractor-html-preview`
+2. Install dependencies: `npm install`
+3. Build the extension: `node build.js`
+4. Load the generated `dist/` directory as an unpacked extension in Chrome.
 
 ---
 
