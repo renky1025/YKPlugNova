@@ -1,5 +1,6 @@
 import { Readability } from '@mozilla/readability';
 import TurndownService from 'turndown';
+import { gfm, tables, strikethrough } from 'turndown-plugin-gfm';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -114,6 +115,39 @@ function unwrapHeadingContainers(doc) {
   });
 }
 
+// ─── Table preservation helpers ─────────────────────────────────────────────
+
+/**
+ * Readability may strip or collapse <table> elements it considers
+ * "non-content" (e.g. layout tables).  To prevent this we mark every
+ * table with a data-keep attribute before parsing, then after parsing
+ * we verify the tables survived.  If they didn't, we fall back to
+ * injecting the table HTML back into the article content.
+ */
+function markTables(doc) {
+  doc.querySelectorAll('table').forEach((table, i) => {
+    table.setAttribute('data-keep-table', i);
+    // Ensure the table has at least one text node so Readability scores it
+    // positively (empty tables are pruned immediately).
+    if (!table.textContent.trim()) return;
+    // Add a content-weight class so Readability doesn't treat it as layout
+    table.classList.add('page');
+  });
+}
+
+/**
+ * Collect serialised HTML of every marked table BEFORE Readability runs.
+ * Returns a Map<index, outerHTML>.
+ */
+function collectTables(doc) {
+  const map = new Map();
+  doc.querySelectorAll('table[data-keep-table]').forEach(table => {
+    const idx = table.getAttribute('data-keep-table');
+    map.set(idx, table.outerHTML);
+  });
+  return map;
+}
+
 // ─── Message listener ────────────────────────────────────────────────────────
 
 // Wait for messages from the popup
@@ -129,6 +163,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       // 2. Bubble headings out of single-child wrapper divs so they survive
       //    Readability's content-score pruning pass
       unwrapHeadingContainers(documentClone);
+      // 3. Mark all tables so they survive Readability's cleanup pass
+      markTables(documentClone);
+      // Snapshot table HTML before Readability may remove them
+      const tableSnapshots = collectTables(documentClone);
       // ────────────────────────────────────────────────────────────────────
 
       const reader = new Readability(documentClone);
@@ -144,13 +182,35 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       const parser = new DOMParser();
       const articleDoc = parser.parseFromString(article.content, 'text/html');
       promoteFakeHeadings(articleDoc.body);
+
+      // ── Restore tables that Readability may have dropped ────────────────
+      // If the snapshot had tables but the parsed article doesn't, append them.
+      if (tableSnapshots.size > 0) {
+        const survivingTables = new Set();
+        articleDoc.querySelectorAll('table[data-keep-table]').forEach(t => {
+          survivingTables.add(t.getAttribute('data-keep-table'));
+        });
+        tableSnapshots.forEach((html, idx) => {
+          if (!survivingTables.has(idx)) {
+            // Append the missing table wrapped in a div so Turndown sees it
+            const wrapper = articleDoc.createElement('div');
+            wrapper.innerHTML = html;
+            articleDoc.body.appendChild(wrapper);
+          }
+        });
+      }
+
       const processedContent = articleDoc.body.innerHTML;
       // ───────────────────────────────────────────────────────────────────
       
       const turndownService = new TurndownService({
         headingStyle: 'atx',
-        codeBlockStyle: 'fenced'
+        codeBlockStyle: 'fenced',
+        bulletListMarker: '-'
       });
+
+      // ── Enable GFM plugin: tables + strikethrough ───────────────────────
+      turndownService.use(gfm);
       
       // Basic rule to preserve some elements or clean up
       turndownService.remove(['script', 'noscript', 'style']);
