@@ -255,6 +255,14 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     sendResponse({ success: true });
     return false;
   }
+  if (msg.type === 'clear_download_state') {
+    // 仅在非 running 状态时清理，防止误清活跃任务
+    if (!activeDownload || activeDownload.status !== 'running') {
+      setActiveDownload(null);
+    }
+    sendResponse({ success: true });
+    return false;
+  }
 
   return false;
 });

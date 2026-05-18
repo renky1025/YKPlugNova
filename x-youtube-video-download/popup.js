@@ -92,10 +92,45 @@ document.addEventListener('DOMContentLoaded', () => {
       for (const rawPart of parts) {
         const part = prettifySlug(rawPart);
         if (!part) continue;
-        if (/^(index|video|play|playlist|master)$/i.test(part)) continue;
-        if (/^[0-9a-f]{8,}$/i.test(part)) continue;
-        if (/^\d{6,}$/.test(part)) continue;
+        // 跳过无意义的通用路径段
+        if (/^(index|video|play|playlist|master|status|watch|embed|reel|shorts|live|post|p)$/i.test(part)) continue;
+        // 跳过纯十六进制哈希（如 CDN 缓存 key），但保留纯数字 ID
+        if (/^[0-9a-f]{8,}$/i.test(part) && /[a-f]/i.test(part)) continue;
         return part;
+      }
+    } catch (e) {}
+    return '';
+  }
+
+  /** 从已知平台 URL 提取有意义的文件名（平台名 + 用户名/ID） */
+  function derivePlatformName(url) {
+    try {
+      const u = new URL(url);
+      const host = u.hostname.toLowerCase().replace(/^www\./, '');
+      const parts = u.pathname.split('/').filter(Boolean);
+
+      // Twitter/X: /username/status/tweetId
+      if (host === 'x.com' || host === 'twitter.com') {
+        const username = parts[0] || '';
+        const tweetId = parts[2] || '';
+        if (username && tweetId) return `X ${username} ${tweetId}`;
+        if (tweetId) return `X ${tweetId}`;
+        if (username) return `X ${username}`;
+        return 'X video';
+      }
+
+      // YouTube: /watch?v=videoId  or /shorts/videoId
+      if (host === 'youtube.com' || host === 'youtu.be') {
+        const videoId = u.searchParams.get('v') || parts[parts.length - 1] || '';
+        if (videoId) return `YouTube ${videoId}`;
+        return 'YouTube video';
+      }
+
+      // Bilibili: /video/BVxxxxxx
+      if (host === 'bilibili.com' || host === 'b23.tv') {
+        const bvid = parts.find(p => /^[Bb][Vv]/.test(p)) || parts[parts.length - 1] || '';
+        if (bvid) return `Bilibili ${bvid}`;
+        return 'Bilibili video';
       }
     } catch (e) {}
     return '';
@@ -209,19 +244,72 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function sanitizeFileNamePart(value) {
     return (value || '')
-      .replace(/[<>:"/\\|?*\u0000-\u001f]/g, ' ')
+      // 移除 URL（http/https 链接）
+      .replace(/https?:\/\/\S+/gi, '')
+      // 移除 emoji 及其他非常规 Unicode 符号
+      .replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}\u{200D}\u{20E3}\u{E0020}-\u{E007F}]/gu, '')
+      // 将中文全角引号、特殊引号替换为空格
+      .replace(/[\u201C\u201D\u2018\u2019\u300C\u300D\u300E\u300F\uFF02\uFF07"]/g, ' ')
+      // 移除文件系统非法字符
+      .replace(/[<>:\/\\|?*\u0000-\u001f]/g, ' ')
+      // 移除 # @ 等社交媒体符号
+      .replace(/[#@]/g, '')
+      // 合并连续空白为单个空格
       .replace(/\s+/g, ' ')
       .trim();
   }
 
+  /** 按字节截断字符串，确保不截断多字节字符 */
+  function truncateToByteLength(str, maxBytes) {
+    const encoder = new TextEncoder();
+    const encoded = encoder.encode(str);
+    if (encoded.length <= maxBytes) return str;
+    // 从后向前逐字符缩减
+    let truncated = str;
+    while (new TextEncoder().encode(truncated).length > maxBytes) {
+      truncated = truncated.slice(0, -1);
+    }
+    return truncated.trim();
+  }
+
   function buildOutputName(candidate) {
+    const MAX_FILENAME_CHARS = 120;  // 字符级上限，避免文件名过长
+    const MAX_FILENAME_BYTES = 200;  // 字节级上限，macOS HFS+/APFS 限制 255 字节（留余量给扩展名）
+
     const parts = [];
-    const titleSource = isMeaninglessTitle(pageTitle) ? (candidate?.inferredTitle || deriveNameFromUrl(candidate?.url || '')) : pageTitle;
-    const title = sanitizeFileNamePart(titleSource);
+    let titleSource;
+    if (!isMeaninglessTitle(pageTitle)) {
+      titleSource = pageTitle;
+    } else {
+      // 回退优先级：候选推断标题 → 平台智能命名 → URL 路径推断
+      titleSource = candidate?.inferredTitle
+        || derivePlatformName(candidate?.url || currentPageUrl)
+        || deriveNameFromUrl(candidate?.url || '');
+    }
+    let title = sanitizeFileNamePart(titleSource);
     const episode = sanitizeFileNamePart(candidate?.episodeText || '');
+
+    // 字符级截断
+    if (title.length > MAX_FILENAME_CHARS) {
+      title = title.substring(0, MAX_FILENAME_CHARS).trim();
+      // 尝试在最后一个空格处截断，避免截断单词
+      const lastSpace = title.lastIndexOf(' ', MAX_FILENAME_CHARS);
+      if (lastSpace > MAX_FILENAME_CHARS * 0.5) {
+        title = title.substring(0, lastSpace).trim();
+      }
+    }
+
     if (title) parts.push(title);
     if (episode && episode !== title) parts.push(episode);
-    return parts.join(' - ') || 'video';
+    let result = parts.join(' - ') || 'video';
+
+    // 字节级截断（处理中文等多字节字符）
+    result = truncateToByteLength(result, MAX_FILENAME_BYTES);
+
+    // 移除末尾的句点和空格（文件系统不喜欢）
+    result = result.replace(/[.\s]+$/, '') || 'video';
+
+    return result;
   }
 
   function formatSeenTime(timestamp) {
@@ -458,7 +546,16 @@ document.addEventListener('DOMContentLoaded', () => {
   }).catch(e => log('获取页面信息失败: ' + e.message, 'error'));
 
   chrome.runtime.sendMessage({ type: 'get_download_state' }).then(res => {
-    if (res?.success) applyDownloadState(res.state);
+    if (res?.success && res.state) {
+      if (res.state.status === 'running') {
+        // 有正在进行的下载，恢复状态
+        applyDownloadState(res.state);
+      } else {
+        // 已完成/失败/取消的历史任务，清理掉，从干净状态开始
+        chrome.runtime.sendMessage({ type: 'clear_download_state' });
+        applyDownloadState(null);
+      }
+    }
   }).catch(() => {});
 
   // 探测
