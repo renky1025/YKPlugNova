@@ -41,8 +41,12 @@ Extract main content from web pages and convert it into clean Markdown with a re
 
 - Robust content extraction using Readability and Turndown
 - Dual-pane interface (Editor and Preview) with real-time Markdown rendering
-- Theme-specific styling for the Markdown preview area
+- Theme-specific styling for the Markdown preview area (including Neon Poster, Swiss Deck, etc.)
 - One-click copy for both raw Markdown and rendered Rich Text (HTML)
+- **Download as Markdown (.md)** — auto-names the file using the page title
+- **Download as Image (PNG)** — capture the rendered preview in high resolution
+- **Lazy-loaded dependencies** — heavy libraries (marked, DOMPurify, highlight.js, juice, html-to-image) are loaded on demand, keeping popup startup near-instant
+- **Optimized syntax highlighting** — only 10 key languages bundled, reducing payload vs. the full highlight.js
 
 **Build Instructions:**
 1. Navigate to the directory: `cd md-extractor-html-preview`

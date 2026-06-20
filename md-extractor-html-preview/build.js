@@ -21,15 +21,29 @@ async function build() {
   // Copy icon placeholders (we will generate a simple icon or just not specify icon right now to let Chrome use default, but manifest requires icons usually. Let's create an empty icon or use default)
 
   // Bundle content script and popup script
+  // popup.js uses ESM dynamic import() for heavy deps (juice, html-to-image)
+  // so we output ESM format with splitting enabled — Chrome MV3 supports ES modules in extension pages.
   await esbuild.build({
     entryPoints: [
-      path.join(__dirname, 'src', 'content.js'),
       path.join(__dirname, 'src', 'popup.js')
     ],
     bundle: true,
-    minify: isProd,
+    minify: true,
+    splitting: true,
+    format: 'esm',
     outdir: outdir,
-    sourcemap: !isProd,
+    chunkNames: 'chunks/[name]-[hash]',
+    target: ['es2020']
+  });
+
+  // content.js doesn't use dynamic imports — keep as IIFE for maximum compat
+  await esbuild.build({
+    entryPoints: [
+      path.join(__dirname, 'src', 'content.js')
+    ],
+    bundle: true,
+    minify: true,
+    outdir: outdir,
     target: ['es2020']
   });
 

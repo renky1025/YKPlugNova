@@ -273,7 +273,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         success: true, 
         title: article.title, 
         markdown: finalMarkdown,
-        byline: article.byline 
+        byline: article.byline,
+        url: window.location.href
       });
     } catch (e) {
       console.error("Extraction error:", e);
