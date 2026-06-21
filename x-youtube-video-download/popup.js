@@ -429,7 +429,10 @@ document.addEventListener('DOMContentLoaded', () => {
         output_name: outputName,
         page_title: pageTitle,
         current_episode: currentEpisode,
-        headers: {},
+        headers: {
+          'Referer': currentPageUrl || '',
+          'User-Agent': navigator.userAgent,
+        },
         candidate: { url: candidate.url, kind: candidate.kind || 'media', score: 0, source: '', note: '', has_drm: false, drm_types: [] },
       },
     }, 15000).then(res => {
